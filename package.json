@@ -12,6 +12,10 @@
     "electron-builder": "^26.0.0"
   },
   "build": {
+    "mac": {
+    "target": ["dmg", "zip"],
+    "category": "public.app-category.music"
+  }
     "appId": "com.artiststudio.app",
     "productName": "ARTIST Studio",
     "files": [
