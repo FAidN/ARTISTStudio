@@ -1,0 +1,42 @@
+name: Build macOS App
+
+# Le script se lance à chaque push sur la branche main (ou master)
+# workflow_dispatch permet aussi de lancer la compilation manuellement depuis GitHub
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-mac:
+    # C'est ici que l'on demande à GitHub de prêter un environnement Mac
+    runs-on: macos-latest
+
+    steps:
+      - name: Récupération du code source
+        uses: actions/checkout@v4
+
+      - name: Installation de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Version stable recommandée
+
+      - name: Installation des dépendances
+        run: npm install
+
+      - name: Compilation de l'application (macOS)
+        run: npm run dist
+        env:
+          # Permet à electron-builder de s'authentifier s'il a besoin de lire des infos sur le repo
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+
+      - name: Sauvegarde du fichier d'installation (.dmg)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ARTIST-Studio-Mac
+          # Electron Builder place généralement le fichier compilé dans dist/
+          # On cible spécifiquement les fichiers .dmg ou .zip macOS
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          retention-days: 7
