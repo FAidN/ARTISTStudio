@@ -1,0 +1,34 @@
+{
+  "name": "artist-studio",
+  "version": "0.6.5",
+  "description": "Gestion de carrière d'artiste : booking, planning, contacts, audience, site web",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.artiststudio.app",
+    "productName": "ARTIST Studio",
+    "files": [
+      "main.js",
+      "preload.js",
+      "soundcloud.js",
+      "reprise.js",
+      "renderer/**",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "directories": {
+      "buildResources": "build"
+    }
+  },
+  "productName": "ARTIST Studio"
+}

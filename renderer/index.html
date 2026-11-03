@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+<title>ARTIST Studio</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<nav>
+<div id="ind"></div>
+<div class="brand"><span class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4M8 6v12M12 3v18M16 8v8M20 11v2"/></svg></span><h1>ARTIST Studio<small id="ver">Version</small></h1></div>
+<span class="grp">Pilotage</span>
+<button data-a="view" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="l">Accueil</span></button>
+<button data-a="view" data-v="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span class="l">Planning</span><b class="badge" data-b="plan" hidden></b></button>
+<button data-a="view" data-v="booking"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="4" height="8" rx="1"/></svg><span class="l">Booking</span><b class="badge" data-b="booking" hidden></b></button>
+<button data-a="view" data-v="contacts"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="l">Contacts</span></button>
+<span class="grp">Contenu</span>
+<button data-a="view" data-v="res"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="l">Ressources</span></button>
+<button data-a="view" data-v="site"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span class="l">Site web</span></button>
+<span class="sp"></span>
+<button data-a="view" data-v="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h.01"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg><span class="l">Réglages</span></button>
+<div class="nst" id="nst"><i></i><span>Site relié</span></div>
+</nav>
+<main id="m"></main><div id="toast" role="status"></div>
+<dialog id="dlg"><h3 id="f_t"></h3>
+<div class="fg">
+<label class="span2">Lieu ou événement<input id="f_v"></label>
+<label>Ville<input id="f_c"></label>
+<label>Date<input id="f_d" type="date"></label>
+<label>Heure de début<input id="f_h" type="time"></label>
+<label>Durée<select id="f_u"></select></label>
+<label class="span2">Cachet (€)<input id="f_f" type="number" min="0" step="10"></label>
+<label class="span2">Contact lié<select id="f_k"></select></label>
+</div>
+<div class="act"><button class="btn ghost" data-a="closedlg">Annuler</button><button class="btn" data-a="savedeal">Enregistrer</button></div></dialog>
+<dialog id="dlgT"><h3 id="t_h"></h3><div class="fg">
+<label class="span2">Tâche<input id="t_t" placeholder="Relancer le bar"></label>
+<label>Type<select id="t_y"></select></label><label>Échéance<input id="t_d" type="date"></label>
+<label class="span2">Contact lié<select id="t_k"></select></label></div>
+<div class="act"><button class="btn ghost" id="t_del" data-a="tdel">Supprimer</button><button class="btn ghost" data-a="closet">Annuler</button><button class="btn" data-a="savetodo">Enregistrer</button></div></dialog>
+<dialog id="dlgK"><h3 id="k_h"></h3><div class="fg">
+<label class="span2">Nom<input id="k_n"></label><label class="span2">Structure (bar, club, agence)<input id="k_o"></label>
+<label>Email<input id="k_e" type="email"></label><label>Téléphone<input id="k_p" type="tel"></label><label class="span2">Instagram<input id="k_i" placeholder="@pseudo"></label>
+<label class="span2">Notes<textarea id="k_nt" rows="3"></textarea></label></div>
+<div class="act"><button class="btn ghost" data-a="closek">Annuler</button><button class="btn" data-a="savek">Enregistrer</button></div></dialog>
+<dialog id="dlgV"><div id="v_b"></div></dialog>
+<dialog id="dlgA"><div class="dh"><h3>Audience</h3><button class="xc" data-a="closea" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="a_b"></div><div class="act"><button class="btn ghost" id="a_r" data-a="refa">Actualiser</button><button class="btn ghost" data-a="gosettings">Gérer les comptes</button></div></dialog>
+<dialog id="dlgC"><div class="dh"><h3>Cachets</h3><button class="xc" data-a="closec" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="c_b"></div></dialog>
+<dialog id="dlgTuto"><button class="xc abs" data-a="tutoskip" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div id="tuto_b"></div></dialog>
+<dialog id="dlgShare"><div class="dh"><h3>Exporter mes données</h3><button class="xc" data-a="shclose" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="sh_b"></div><p class="late" id="sh_m"></p><div class="act"><button class="btn ghost" data-a="shclose">Annuler</button><button class="btn" data-a="shsave">Enregistrer le fichier</button></div></dialog>
+<dialog id="dlgImp"><div class="dh"><h3>Importer des données</h3><button class="xc" data-a="impclose" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="imp_b"></div><p class="late" id="imp_m"></p><div class="act"><button class="btn ghost" data-a="impclose">Annuler</button><button class="btn" id="imp_go" data-a="impgo">Importer</button></div></dialog>
+<script src="share.js"></script>
+<script src="app.js"></script>
+</body></html>
