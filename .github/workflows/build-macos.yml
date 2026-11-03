@@ -27,16 +27,16 @@ jobs:
       - name: Compilation de l'application (macOS)
         run: npm run dist
         env:
-          # Permet à electron-builder de s'authentifier s'il a besoin de lire des infos sur le repo
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+
+      - name: Voir les fichiers générés (Debug)
+        run: ls -R dist/
 
       - name: Sauvegarde du fichier d'installation (.dmg)
         uses: actions/upload-artifact@v4
         with:
           name: ARTIST-Studio-Mac
-          # Electron Builder place généralement le fichier compilé dans dist/
-          # On cible spécifiquement les fichiers .dmg ou .zip macOS
           path: |
-            dist/*.dmg
-            dist/*.zip
+            dist/**/*.dmg
+            dist/**/*.zip
           retention-days: 7
