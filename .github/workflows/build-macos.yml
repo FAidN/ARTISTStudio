@@ -1,17 +1,12 @@
-name: Build macOS App
+name: Build macOS
 
-# Le script se lance à chaque push sur la branche main (ou master)
-# workflow_dispatch permet aussi de lancer la compilation manuellement depuis GitHub
 on:
   push:
-    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
   build-mac:
-    # C'est ici que l'on demande à GitHub de prêter un environnement Mac
-    runs-on: macos-latest
-
+    runs-on: macos-15
     steps:
       - name: Récupération du code source
         uses: actions/checkout@v4
@@ -19,24 +14,51 @@ jobs:
       - name: Installation de Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Version stable recommandée
+          node-version: 22
+          cache: npm
 
       - name: Installation des dépendances
-        run: npm install
+        run: npm ci
 
+      # La cible Mac et le dossier de sortie sont imposés ici : peu importe ce que contient le package.json
       - name: Compilation de l'application (macOS)
-        run: npm run dist
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        run: >
+          npx electron-builder --mac dmg zip --universal --publish never
+          -c.directories.output=dist
+          -c.mac.identity=-
+          -c.mac.hardenedRuntime=false
+          -c.mac.artifactName='ARTIST-Studio-${version}-mac-${arch}.${ext}'
 
       - name: Voir les fichiers générés (Debug)
-        run: ls -R dist/
+        run: |
+          echo "Dossier courant : $PWD"
+          echo "--- contenu de dist"
+          ls -la dist || true
+          echo "--- tous les .dmg et .zip du projet"
+          find . -path ./node_modules -prune -o \( -name "*.dmg" -o -name "*.zip" \) -print
+
+      - name: Vérifier que les fichiers existent
+        run: |
+          ls dist/*.dmg dist/*.zip
+          APP="dist/mac-universal/ARTIST Studio.app"
+          echo "Architectures : $(lipo -archs "$APP/Contents/MacOS/ARTIST Studio")"
+          test -d "$APP/Contents/_CodeSignature" || { echo "ERREUR : signature absente"; exit 1; }
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
+      # Lance vraiment l'application (comme si elle venait d'être téléchargée) ; sans effet bloquant si le test n'existe pas
+      - name: Tester le lancement
+        timeout-minutes: 3
+        continue-on-error: true
+        run: |
+          APP="$PWD/dist/mac-universal/ARTIST Studio.app"
+          xattr -w com.apple.quarantine "0083;$(printf '%x' $(date +%s));Safari;" "$APP"
+          ARTIST_SELFTEST=1 "$APP/Contents/MacOS/ARTIST Studio"
 
       - name: Sauvegarde du fichier d'installation (.dmg)
         uses: actions/upload-artifact@v4
         with:
-          name: ARTIST-Studio-Mac
+          name: ARTIST-Studio-mac
           path: |
-            dist/**/*.dmg
-            dist/**/*.zip
-          retention-days: 7
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: error
