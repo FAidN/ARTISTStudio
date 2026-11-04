@@ -1,0 +1,101 @@
+name: Build ARTIST Studio
+
+# Lancer à la main (onglet Actions, bouton "Run workflow") ou en poussant une étiquette : git tag v0.6.5 && git push --tags
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: 'dist/*.exe' }
+
+  mac:
+    runs-on: macos-15
+    env:
+      # Vrai seulement si un certificat Apple Developer ID est enregistré dans les secrets du dépôt
+      HAS_CERT: ${{ secrets.CSC_LINK != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+
+      - name: Build Mac alpha (signature ad hoc, sans certificat Apple)
+        if: env.HAS_CERT != 'true'
+        run: npx electron-builder --mac --publish never -c.mac.identity=- -c.mac.hardenedRuntime=false
+
+      - name: Build Mac signé et notarisé (certificat Apple Developer ID)
+        if: env.HAS_CERT == 'true'
+        run: npx electron-builder --mac --publish never
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+
+      - name: Contrôler l'application (architectures, signature, Gatekeeper)
+        run: |
+          APP="dist/mac-universal/ARTIST Studio.app"
+          echo "Architectures : $(lipo -archs "$APP/Contents/MacOS/ARTIST Studio")"
+          test -d "$APP/Contents/_CodeSignature" && echo "Sceau de signature présent" || { echo "ERREUR : sceau de signature absent"; exit 1; }
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dv --verbose=2 "$APP" 2>&1 | sed -n 1,12p
+          spctl --assess --type execute --verbose=4 "$APP" || echo "Gatekeeper refuse l'application : normal tant qu'elle n'est pas notarisée"
+
+      # On envoie les fichiers .dmg et .zip, jamais le dossier .app : l'envoi d'un dossier fait perdre
+      # les droits et les liens internes, et l'application devient "endommagée".
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: |
+            dist/*.dmg
+            dist/*.zip
+
+  # Lance vraiment l'application sur plusieurs versions de macOS, comme si elle venait d'être téléchargée
+  test-mac:
+    needs: mac
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15, macos-26, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: mac, path: pkg }
+      - name: Installer, marquer comme téléchargée, lancer le test
+        run: |
+          set -e
+          sw_vers
+          mkdir app && ditto -x -k pkg/*.zip app
+          APP="$PWD/app/ARTIST Studio.app"
+          xattr -w com.apple.quarantine "0083;$(printf '%x' $(date +%s));Safari;" "$APP"
+          echo "Quarantaine : $(xattr -p com.apple.quarantine "$APP")"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          ARTIST_SELFTEST=1 "$APP/Contents/MacOS/ARTIST Studio"
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, test-mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: pkg }
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            pkg/mac/*
+            pkg/windows/*
+          prerelease: true

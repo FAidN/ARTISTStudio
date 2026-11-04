@@ -1,7 +1,8 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, safeStorage, net } = require('electron');
 const fs = require('fs'), path = require('path'), http = require('http'), crypto = require('crypto');
-const APPDATA = app.getPath('appData'), DATA_DIR = path.join(APPDATA, 'artist-studio'), OLD_DIR = path.join(APPDATA, 'aidn-studio');
-try { require('./reprise')(OLD_DIR, DATA_DIR); } catch (er) { console.error('reprise des données', er); }
+const SELFTEST = process.env.ARTIST_SELFTEST === '1';   // utilisé par les tests automatiques de GitHub, jamais en usage normal
+const APPDATA = app.getPath('appData'), DATA_DIR = SELFTEST ? path.join(require('os').tmpdir(), 'artist-studio-selftest-' + process.pid) : path.join(APPDATA, 'artist-studio'), OLD_DIR = path.join(APPDATA, 'aidn-studio');
+if (!SELFTEST) { try { require('./reprise')(OLD_DIR, DATA_DIR); } catch (er) { console.error('reprise des données', er); } }
 app.setPath('userData', DATA_DIR);
 
 const F = n => path.join(app.getPath('userData'), n);
@@ -25,13 +26,26 @@ else app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.res
 app.whenReady().then(() => {
   if (!gotLock) return;
   const w = win = new BrowserWindow({
-    width: 1280, height: 820, minWidth: 900, backgroundColor: '#0b0c09', autoHideMenuBar: true,
+    width: 1280, height: 820, minWidth: 900, backgroundColor: '#0b0c09', autoHideMenuBar: true, show: !SELFTEST,
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false }
   });
   w.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   w.webContents.on('will-navigate', ev => ev.preventDefault());
   w.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  if (SELFTEST) {
+    // Vérifie que l'application démarre vraiment : interface chargée, pont de données, version
+    const fin = (ok, msg) => { console.log((ok ? 'SELFTEST OK ' : 'SELFTEST ECHEC ') + msg); app.exit(ok ? 0 : 1); };
+    setTimeout(() => fin(false, 'délai dépassé'), 45000);
+    w.webContents.once('did-fail-load', (_e, code, desc) => fin(false, 'chargement impossible : ' + desc));
+    w.webContents.once('did-finish-load', () => setTimeout(async () => {
+      try {
+        const r = JSON.parse(await w.webContents.executeJavaScript(`(async () => JSON.stringify({ menu: !!document.querySelector('nav'), api: typeof api, partage: typeof Share, donnees: Array.isArray((await api.load()).deals), version: (document.getElementById('ver') || {}).textContent || '' }))()`));
+        const ok = r.menu && r.api === 'object' && r.partage === 'object' && r.donnees && /^Version \d/.test(r.version);
+        fin(ok, JSON.stringify({ ...r, electron: process.versions.electron, arch: process.arch, plateforme: process.platform + ' ' + require('os').release() }));
+      } catch (er) { fin(false, String(er)); }
+    }, 1500));
+  }
 });
 app.on('window-all-closed', () => app.quit());
 

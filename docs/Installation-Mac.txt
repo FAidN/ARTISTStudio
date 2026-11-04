@@ -1,0 +1,29 @@
+ARTIST Studio sur Mac - Installation de la version alpha
+
+Pourquoi un message d'avertissement ?
+L'application est en test et n'est pas encore validée par Apple (cette validation est payante et sera faite pour la version finale). macOS affiche donc un avertissement la première fois. Ce n'est pas un virus : voici comment l'ouvrir.
+
+1. Ouvrez le fichier ARTIST-Studio-...-mac-universal.dmg puis glissez ARTIST Studio dans le dossier Applications.
+
+2. Double-cliquez sur ARTIST Studio dans Applications.
+   macOS affiche un message disant que l'application ne peut pas être ouverte ou qu'elle est endommagée.
+   Cliquez sur "Terminé" (ne cliquez PAS sur "Placer dans la corbeille").
+
+3. Ouvrez Réglages Système, puis "Confidentialité et sécurité".
+   Descendez jusqu'à la section "Sécurité" : un message indique que ARTIST Studio a été bloqué.
+   Cliquez sur "Ouvrir quand même", saisissez votre mot de passe ou utilisez Touch ID, puis cliquez sur "Ouvrir".
+   Vous ne le ferez qu'une seule fois.
+
+Si le bouton "Ouvrir quand même" n'apparaît pas :
+   Ouvrez l'application Terminal (touches Cmd + Espace, tapez Terminal, Entrée).
+   Copiez-collez cette ligne, puis appuyez sur Entrée :
+
+   xattr -dr com.apple.quarantine "/Applications/ARTIST Studio.app"
+
+   Ouvrez ensuite ARTIST Studio normalement.
+
+Bon à savoir
+- L'application fonctionne sur les Mac Apple silicon (M1 et suivants) et sur les Mac Intel, avec macOS 12 ou plus récent.
+- Au premier enregistrement d'un jeton, macOS peut demander le mot de passe de votre session : cliquez sur "Toujours autoriser".
+- À chaque nouvelle version alpha, il faudra refaire les étapes 2 et 3.
+- Vos données sont dans le dossier Bibliothèque/Application Support/artist-studio. Pensez à les sauvegarder avec Réglages > Exporter mes données.
