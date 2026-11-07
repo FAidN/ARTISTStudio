@@ -9,9 +9,9 @@ const F = n => path.join(app.getPath('userData'), n);
 const read = (n, d) => { try { return JSON.parse(fs.readFileSync(F(n), 'utf8')); } catch { return d; } };
 const readData = () => { const a = read('data.json', null); return a || read('data.bak.json', {}); };
 const DEF = {
-  deals: [{ id: 1, v: 'Maximo Club', c: 'Nantes', d: '2026-10-08', f: '', s: 3, pub: true }],
+  deals: [],
   resources: [],
-  settings: { owner: 'djaidn', repo: 'djaidn.github.io', path: 'dates.json' }
+  settings: { owner: '', repo: '', path: '' }
 };
 const slug = x => (x.v + '-' + x.d).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const T = (p, ms = 8000) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('délai dépassé')), ms))]);
@@ -105,6 +105,7 @@ ipcMain.handle('publish', async (_, s) => {
   const tk = getToken();
   if (!tk) return { ok: false, error: 'Aucun jeton GitHub enregistré (voir Réglages).' };
   const { owner, repo, path: file } = s.settings;
+  if (!owner || !repo || !file) return { ok: false, error: 'Veuillez renseignez le compte, le dépôt et le fichier GitHub dans les Réglages.' };
   const url = `https://api.github.com/repos/${owner}/${repo}/contents/${file}`;
   const h = { Authorization: `Bearer ${tk}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
   let step = 'lecture du fichier sur GitHub';

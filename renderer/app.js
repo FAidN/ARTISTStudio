@@ -170,7 +170,7 @@ ${L.map(r => `<div class="row"><span><i class="ext">${r.where == 'Drive' ? 'LIEN
 function site() {
   const on = S.deals.filter(x => x.pub), rd = S.deals.filter(x => x.s == 3 && !x.pub && x.d);
   return `<h2>Site web</h2><p class="sub">Chaque modification est envoyée à votre site, la mise en ligne prend environ une minute.</p>
-<div class="status">${dot()}<div><b>${S.hasToken ? 'Jeton GitHub enregistré' : 'Jeton GitHub manquant (voir Réglages)'}</b><br><span style="color:var(--muted);font-size:13px">${e(S.settings.owner)}/${e(S.settings.repo)}, ${e(S.settings.path)}</span></div><button class="btn" data-a="sync">Synchroniser maintenant</button></div>
+<div class="status">${dot()}<div><b>${S.hasToken ? 'Jeton GitHub enregistré' : 'Jeton GitHub manquant (voir Réglages)'}</b><br><span style="color:var(--muted);font-size:13px">${S.settings.owner && S.settings.repo && S.settings.path ? e(S.settings.owner) + '/' + e(S.settings.repo) + ', ' + e(S.settings.path) : 'Dépôt GitHub non renseigné (voir Réglages)'}</span></div><button class="btn" data-a="sync">Synchroniser maintenant</button></div>
 <h4>En ligne (${on.length})</h4>${on.map(x => `<div class="row"><b>${e(x.v)}, ${e(x.c)}${when(x) ? ', ' + e(when(x)) : ''}</b><span><input type="date" value="${x.d}" data-a="setd" data-id="${x.id}" aria-label="Date de ${e(x.v)}"><button class="btn ghost" data-a="unpub" data-id="${x.id}">Retirer du site</button></span></div>`).join('') || '<p class="sub">Aucune date en ligne.</p>'}
 <h4>Validées, prêtes à publier (${rd.length})</h4>${rd.map(x => `<div class="row"><b>${e(x.v)}, ${e(x.c)}</b><span>${fd(x.d)}<button class="btn" data-a="pub" data-id="${x.id}">Publier</button></span></div>`).join('') || '<p class="sub">Rien à publier pour le moment.</p>'}`;
 }
@@ -189,7 +189,7 @@ ${colorsSection()}
 <h4>Tutoriel</h4><div class="add"><button class="btn ghost" data-a="tutoopen">Revoir le tutoriel</button></div>
 <h4>Site web (GitHub)</h4><div class="status">${dot()}<b>${S.hasToken ? 'Jeton GitHub enregistré' : 'Aucun jeton enregistré'}</b></div>
 <div class="add" style="margin-top:10px"><input id="tk" type="password" placeholder="Collez votre jeton GitHub" aria-label="Jeton GitHub" autocomplete="off" style="min-width:320px"><button class="btn" data-a="tok">Enregistrer le jeton</button></div>
-<div class="add"><input id="so" value="${e(S.settings.owner)}" aria-label="Compte GitHub"><input id="sr" value="${e(S.settings.repo)}" aria-label="Dépôt"><input id="sp" value="${e(S.settings.path)}" aria-label="Fichier"><button class="btn ghost" data-a="sset">Enregistrer</button></div>
+<div class="add"><input id="so" value="${e(S.settings.owner)}" placeholder="Compte GitHub" aria-label="Compte GitHub"><input id="sr" value="${e(S.settings.repo)}" placeholder="Nom du dépôt" aria-label="Dépôt"><input id="sp" value="${e(S.settings.path)}" placeholder="Fichier des dates (ex. dates.json)" aria-label="Fichier"><button class="btn ghost" data-a="sset">Enregistrer</button></div>
 <h4>Comptes d'audience</h4><p class="sub">Laissez vide une plateforme que vous n'utilisez pas : elle n'apparaît pas dans l'accueil.</p>
 <div class="fg" style="max-width:760px">${inp('youtube', 'YouTube (@chaîne)', '@chaine')}${inp('soundcloud', 'SoundCloud (identifiant)', 'mon-pseudo')}${inp('mixcloud', 'Mixcloud (pseudo)', 'mon-pseudo')}${inp('deezer', 'Deezer (numéro d\'artiste)', '123456')}</div>
 <div class="fg" style="max-width:760px;margin-top:12px"><label>Clé API YouTube ${S.keys.yt ? '(enregistrée)' : ''}<input id="a_k" type="password" autocomplete="off" placeholder="${S.keys.yt ? 'Laisser vide pour la conserver' : ''}"></label><label>Client ID SoundCloud (facultatif) ${S.keys.sc ? '(enregistré)' : ''}<input id="a_sk" type="password" autocomplete="off" placeholder="${S.keys.sc ? 'Laisser vide pour le conserver' : ''}"></label><label>Client secret SoundCloud (facultatif) ${S.keys.scs ? '(enregistré)' : ''}<input id="a_ss" type="password" autocomplete="off" placeholder="${S.keys.scs ? 'Laisser vide pour le conserver' : ''}"></label></div>
@@ -364,7 +364,7 @@ function navState() {
   }
   const bd = { plan: S.todos.filter(t => !t.done).length, booking: S.deals.filter(x => x.s < 3).length };
   Object.keys(bd).forEach(v => { const el = nv.querySelector(`[data-b="${v}"]`); if (el) { el.textContent = bd[v]; el.hidden = !bd[v]; } });
-  const st = $('nst'); if (st) { st.className = 'nst' + (S.hasToken ? ' ok' : ''); st.querySelector('span').textContent = S.hasToken ? 'Site relié' : 'Jeton GitHub manquant'; }
+  const st = $('nst'); if (st) { const lie = S.hasToken && S.settings.owner && S.settings.repo && S.settings.path; st.className = 'nst' + (lie ? ' ok' : ''); st.querySelector('span').textContent = lie ? 'Site relié' : !S.hasToken ? 'Jeton GitHub manquant' : 'Dépôt GitHub manquant'; }
 }
 function draw() {
   const m = $('m'); applyColors();
@@ -586,7 +586,7 @@ document.addEventListener('click', async ev => {
     const er = Object.entries(S.err || {}); toast(er.length ? `${(PL[er[0][0]] || {}).n || 'Actualisation'} : ${er[0][1]}` : 'Comptes actualisés', er.length ? 6000 : 2400);
   }
   else if (a === 'sname') { S.settings.name = $('sn').value.trim(); toast('Nom de compte enregistré'); }
-  else if (a === 'sset') S.settings = { ...S.settings, owner: $('so').value.trim(), repo: $('sr').value.trim(), path: $('sp').value.trim() || 'dates.json' };
+  else if (a === 'sset') S.settings = { ...S.settings, owner: $('so').value.trim(), repo: $('sr').value.trim(), path: $('sp').value.trim() };
   else if (a === 'sacc') {
     readAccounts();
     let ok = true;
